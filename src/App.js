@@ -312,6 +312,7 @@ function App() {
           />
           <label>OI</label>
         </div>
+        <div>{!loaded && <div>Loading.....</div>}</div>
         <div style={styles}>
           {loaded && (
             <LineChart
