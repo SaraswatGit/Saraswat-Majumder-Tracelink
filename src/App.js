@@ -17,6 +17,8 @@ function App() {
   const [showOpen, setShowOpen] = useState(true);
   const [showClose, setShowClose] = useState(true);
   const [showVol, setShowVol] = useState(true);
+  const [showOI, setShowOI] = useState(true);
+
   const [input, setinput] = useState("");
   const [clicked, setclick] = useState(false);
   const [showinstrumentlist, setshowinstrumentlist] = useState(false);
@@ -72,6 +74,8 @@ function App() {
     return index === -1 ? null : volumeData[index].value;
   };
   const getOIData = (data) => {
+    if (!showOI) return null;
+
     const index = oiData.findIndex((obj) => obj.timestamp === data.timestamp);
     return index === -1 ? null : oiData[index].value;
   };
@@ -288,7 +292,14 @@ function App() {
             }}
           />
           <label> Volume</label>
-          <input type="checkbox" className="checkboxS" />
+          <input
+            type="checkbox"
+            className="checkboxS"
+            defaultChecked={showOI}
+            onClick={() => {
+              setShowOI(!showOI);
+            }}
+          />
           <label>OI</label>
         </div>
         <div style={styles}>
