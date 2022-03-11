@@ -79,8 +79,17 @@ function App() {
     const index = oiData.findIndex((obj) => obj.timestamp === data.timestamp);
     return index === -1 ? null : oiData[index].value;
   };
-
+  const reset = () => {
+    setTimestampData([[{ timestamp: "", value: "" }]]);
+    setCloseData([[{ timestamp: "", value: "" }]]);
+    setOpenData([[{ timestamp: "", value: "" }]]);
+    setHighData([[{ timestamp: "", value: "" }]]);
+    setLowData([[{ timestamp: "", value: "" }]]);
+    setVolumeData([[{ timestamp: "", value: "" }]]);
+    setOIData([[{ timestamp: "", value: "" }]]);
+  };
   const getChartData2 = async () => {
+    reset();
     setLoaded(false);
     const { data } = await Axios.get(
       `http://139.59.76.169:4002/api/candles?instrument=${company}&timeframe=${timeframe}&from=${fromDate}&to=${toDate}`
@@ -150,9 +159,10 @@ function App() {
                 paddingTop: "0.5vh",
                 paddingLeft: "0.5vh",
                 backgroundColor: "white",
-                maxHeight: "20vh",
+                maxHeight: "18vh",
                 marginTop: "0vh",
                 overflow: "auto",
+                position: "fixed",
               }}
             >
               {instruments
@@ -239,7 +249,7 @@ function App() {
       <div
         style={{
           marginTop: "20vh",
-          position: "fixed",
+          position: "absolute",
           marginLeft: "5vw",
           overflow: "auto",
           padding: "1vh",
