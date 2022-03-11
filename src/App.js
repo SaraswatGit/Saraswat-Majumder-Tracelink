@@ -1,6 +1,7 @@
 import "./App.css";
-import React, { useState, useEffect } from "react";
-import { init, dispose } from "klinecharts";
+import React, { useState, useEffect, useMemo } from "react";
+import { LineChart, Line, XAxis, YAxis } from "recharts";
+
 import Layout from "./Layout";
 import Axios from "axios";
 
@@ -16,7 +17,21 @@ function App() {
   const [showOpen, setShowOpen] = useState(true);
   const [showClose, setShowClose] = useState(true);
   const [showVol, setShowVol] = useState(true);
-
+  const [input, setinput] = useState("");
+  const [clicked, setclick] = useState(false);
+  const [showinstrumentlist, setshowinstrumentlist] = useState(false);
+  const [timestampData, setTimestampData] = useState([[{ timestamp: "" }]]);
+  const [highData, setHighData] = useState([[{ timestamp: "", value: "" }]]);
+  const [lowData, setLowData] = useState([[{ timestamp: "", value: "" }]]);
+  const [openData, setOpenData] = useState([[{ timestamp: "", value: "" }]]);
+  const [closeData, setCloseData] = useState([[{ timestamp: "", value: "" }]]);
+  const [volumeData, setVolumeData] = useState([{ timestamp: "", value: " " }]);
+  const [oiData, setOIData] = useState([{ timestamp: "", value: " " }]);
+  const [loaded, setLoaded] = useState(false);
+  const styles = {
+    fontFamily: "sans-serif",
+    textAlign: "center",
+  };
   useEffect(() => {
     console.log("saraswat");
 
@@ -26,52 +41,145 @@ function App() {
       );
       setinstruments(data.data);
     })();
-
-    return () => {
-      dispose("basic-k-line");
-    };
   }, []);
-  const getChartData = async () => {
-    console.log("saraswatdata");
+  const getOpenData = (data) => {
+    if (!showOpen) return null;
+    const index = openData.findIndex((obj) => obj.timestamp === data.timestamp);
+    return index === -1 ? null : openData[index].value;
+  };
+  const getCloseData = (data) => {
+    if (!showClose) return null;
+    const index = closeData.findIndex(
+      (obj) => obj.timestamp === data.timestamp
+    );
+    return index === -1 ? null : closeData[index].value;
+  };
+  const getHighData = (data) => {
+    if (!showHigh) return null;
+    const index = highData.findIndex((obj) => obj.timestamp === data.timestamp);
+    return index === -1 ? null : highData[index].value;
+  };
+  const getLowData = (data) => {
+    if (!showLow) return null;
+    const index = lowData.findIndex((obj) => obj.timestamp === data.timestamp);
+    return index === -1 ? null : lowData[index].value;
+  };
+  const getVolumeData = (data) => {
+    if (!showVol) return null;
+    const index = volumeData.findIndex(
+      (obj) => obj.timestamp === data.timestamp
+    );
+    return index === -1 ? null : volumeData[index].value;
+  };
+  const getOIData = (data) => {
+    const index = oiData.findIndex((obj) => obj.timestamp === data.timestamp);
+    return index === -1 ? null : oiData[index].value;
+  };
 
+  const getChartData2 = async () => {
+    setLoaded(false);
     const { data } = await Axios.get(
       `http://139.59.76.169:4002/api/candles?instrument=${company}&timeframe=${timeframe}&from=${fromDate}&to=${toDate}`
     );
-    setChartData(data["data"]);
-    const kLineChart = init("basic-k-line");
-    kLineChart.applyNewData(
-      data["data"].map(function (data) {
-        return {
-          timestamp: new Date(data[0]).getTime(),
-          open: showOpen ? +data[1] : null,
-          high: showHigh ? +data[2] : null,
-          low: showLow ? +data[3] : null,
-          close: showClose ? +data[4] : null,
-          volume: showVol ? Math.ceil(+data[5]) : null,
-        };
-      })
-    );
 
-    console.log(data["data"]);
+    data["data"].map((val) => {
+      let time = {
+        timestamp: val[0],
+      };
+      let high = {
+        timestamp: val[0],
+        value: val[2],
+      };
+      let low = {
+        timestamp: val[0],
+        value: val[3],
+      };
+      let open = {
+        timestamp: val[0],
+        value: val[1],
+      };
+      let close = {
+        timestamp: val[0],
+        value: val[4],
+      };
+      let vol = {
+        timestamp: val[0],
+        value: val[5],
+      };
+      let oi = {
+        timestamp: val[0],
+        value: val[6],
+      };
+      setTimestampData((old) => [...old, time]);
+      setCloseData((old) => [...old, close]);
+      setOpenData((old) => [...old, open]);
+      setHighData((old) => [...old, high]);
+      setLowData((old) => [...old, low]);
+      setVolumeData((old) => [...old, vol]);
+      setOIData((old) => [...old, oi]);
+    });
+    setLoaded(true);
   };
 
   return (
     <div className="App">
       <form className="forminput">
+        <label htmlFor="instrument">Instrument : </label>
         <div>
-          <label htmlFor="instrument">Instrument : </label>
-          <select
-            value={company}
+          <input
+            type="search"
+            placeholder="Company"
             onChange={(event) => {
-              setCompany(event.target.value);
+              setinput(event.target.value);
+              setshowinstrumentlist(true);
+              setclick(false);
             }}
-          >
-            {instruments.map((val, index) => (
-              <option key={index} value={val}>
-                {val}
-              </option>
-            ))}
-          </select>
+            onClick={() => {
+              setclick(false);
+            }}
+            value={clicked ? company : input}
+          />
+          {showinstrumentlist && (
+            <div
+              style={{
+                width: "11.5vw",
+                paddingTop: "0.5vh",
+                paddingLeft: "0.5vh",
+                backgroundColor: "white",
+                maxHeight: "20vh",
+                marginTop: "0vh",
+                overflow: "auto",
+              }}
+            >
+              {instruments
+                .filter((val) => {
+                  if (input === "") {
+                    return val;
+                  } else if (val.toLowerCase().includes(input.toLowerCase())) {
+                    return val;
+                  }
+                })
+                .map((val) => {
+                  return (
+                    <div
+                      style={{
+                        paddingTop: "0.5vh",
+                        paddingLeft: "0.5vh",
+                        marginTop: "0.2vh",
+                      }}
+                      className="listitem"
+                      onClick={() => {
+                        setCompany(val);
+                        setclick(true);
+                        setshowinstrumentlist(false);
+                      }}
+                    >
+                      {val}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
         </div>
         <div>
           <label htmlFor="timeframe">Timeframe : </label>
@@ -115,72 +223,126 @@ function App() {
           ></input>
         </div>
         <button
-          onClick={async (e) => {
+          onClick={(e) => {
             e.preventDefault();
-            await getChartData();
+            getChartData2();
           }}
         >
           {" "}
           Fetch{" "}
         </button>
       </form>
-      <div className="checkboxes">
-        <input
-          type="checkbox"
-          className="checkboxS"
-          defaultChecked={showOpen}
-          onClick={() => {
-            setShowOpen(!showOpen);
-            getChartData();
-          }}
-        />
-        <label>Open</label>
-        <input
-          type="checkbox"
-          className="checkboxS"
-          defaultChecked={showHigh}
-          onClick={() => {
-            setShowHigh(!showHigh);
-            getChartData();
-          }}
-        />
-        <label>High</label>
-        <input
-          type="checkbox"
-          className="checkboxS"
-          defaultChecked={showLow}
-          onClick={() => {
-            setShowLow(!showLow);
-            getChartData();
-          }}
-        />
-        <label>Low</label>
-        <input
-          type="checkbox"
-          className="checkboxS"
-          defaultChecked={showClose}
-          onClick={() => {
-            setShowClose(!showClose);
-            getChartData();
-          }}
-        />
-        <label>Close</label>
-        <input
-          type="checkbox"
-          className="checkboxS"
-          defaultChecked={showVol}
-          onClick={() => {
-            setShowVol(!showVol);
-            getChartData();
-          }}
-        />
-        <label> Volume</label>
-        <input type="checkbox" className="checkboxS" />
-        <label>OI</label>
+      <div
+        style={{
+          marginTop: "20vh",
+          position: "fixed",
+          marginLeft: "5vw",
+          overflow: "auto",
+          padding: "1vh",
+          border: "1px solid black",
+        }}
+      >
+        <div className="checkboxes">
+          <input
+            type="checkbox"
+            className="checkboxS"
+            defaultChecked={showOpen}
+            onClick={() => {
+              setShowOpen(!showOpen);
+            }}
+          />
+          <label>Open</label>
+          <input
+            type="checkbox"
+            className="checkboxS"
+            defaultChecked={showHigh}
+            onClick={() => {
+              setShowHigh(!showHigh);
+            }}
+          />
+          <label>High</label>
+          <input
+            type="checkbox"
+            className="checkboxS"
+            defaultChecked={showLow}
+            onClick={() => {
+              setShowLow(!showLow);
+            }}
+          />
+          <label>Low</label>
+          <input
+            type="checkbox"
+            className="checkboxS"
+            defaultChecked={showClose}
+            onClick={() => {
+              setShowClose(!showClose);
+            }}
+          />
+          <label>Close</label>
+          <input
+            type="checkbox"
+            className="checkboxS"
+            defaultChecked={showVol}
+            onClick={() => {
+              setShowVol(!showVol);
+            }}
+          />
+          <label> Volume</label>
+          <input type="checkbox" className="checkboxS" />
+          <label>OI</label>
+        </div>
+        <div style={styles}>
+          {loaded && (
+            <LineChart
+              width={1400}
+              height={400}
+              data={timestampData}
+              margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+            >
+              <Line
+                type="monotone"
+                dataKey={getCloseData}
+                stroke="#8884d8"
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey={getOpenData}
+                stroke="yellow"
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey={getHighData}
+                stroke="green"
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey={getLowData}
+                stroke="orange"
+                dot={false}
+              />
+
+              <Line
+                type="monotone"
+                dataKey={getVolumeData}
+                stroke="red"
+                dot={false}
+              />
+
+              <Line
+                type="monotone"
+                dataKey={getOIData}
+                stroke="violet"
+                dot={false}
+              />
+              <XAxis dataKey="timestamp" />
+              <YAxis />
+            </LineChart>
+          )}
+        </div>
       </div>
-      <Layout title="K-Line Chart ">
-        <div id="basic-k-line" className="k-line-chart" />
-      </Layout>
     </div>
   );
 }
